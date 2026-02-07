@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useMemo } from 'react';
 import { Group, Line, RegularPolygon, Text } from 'react-konva';
 import type { Route, RoutePoint } from '@/types';
 
@@ -9,9 +10,6 @@ interface CanvasRouteProps {
   onSelect: () => void;
 }
 
-/**
- * Calcule la distance totale d'un chemin
- */
 function getTotalLength(points: RoutePoint[]): number {
   let total = 0;
   for (let i = 1; i < points.length; i++) {
@@ -22,9 +20,6 @@ function getTotalLength(points: RoutePoint[]): number {
   return total;
 }
 
-/**
- * Retourne le point et l'angle a une distance donnee le long du chemin
- */
 function getPointAtDistance(
   points: RoutePoint[],
   targetDist: number
@@ -48,7 +43,6 @@ function getPointAtDistance(
     accumulated += segLen;
   }
 
-  // Dernier point
   const lastIdx = points.length - 1;
   const dx = points[lastIdx].x - points[lastIdx - 1].x;
   const dy = points[lastIdx].y - points[lastIdx - 1].y;
@@ -58,24 +52,32 @@ function getPointAtDistance(
   };
 }
 
-export function CanvasRoute({ route, isSelected, onSelect }: CanvasRouteProps) {
-  if (route.points.length < 2) return null;
+export const CanvasRoute = memo(function CanvasRoute({
+  route,
+  isSelected,
+  onSelect,
+}: CanvasRouteProps) {
+  // Memoize expensive computations
+  const { flatPoints, arrows, midPoint, totalLength } = useMemo(() => {
+    if (route.points.length < 2) return { flatPoints: [], arrows: [], midPoint: null, totalLength: 0 };
 
-  // Convertir les points en tableau plat pour Konva Line
-  const flatPoints = route.points.flatMap((p) => [p.x, p.y]);
-  const totalLength = getTotalLength(route.points);
+    const flat = route.points.flatMap((p) => [p.x, p.y]);
+    const len = getTotalLength(route.points);
 
-  // Calculer les positions des fleches
-  const arrows: { x: number; y: number; rotation: number }[] = [];
-  if (route.showArrows && route.arrowSpacing > 0) {
-    for (let dist = route.arrowSpacing; dist < totalLength; dist += route.arrowSpacing) {
-      const { point, angle } = getPointAtDistance(route.points, dist);
-      arrows.push({ x: point.x, y: point.y, rotation: angle + 90 });
+    const arrowList: { x: number; y: number; rotation: number }[] = [];
+    if (route.showArrows && route.arrowSpacing > 0) {
+      for (let dist = route.arrowSpacing; dist < len; dist += route.arrowSpacing) {
+        const { point, angle } = getPointAtDistance(route.points, dist);
+        arrowList.push({ x: point.x, y: point.y, rotation: angle + 90 });
+      }
     }
-  }
 
-  // Label au milieu du chemin
-  const midPoint = getPointAtDistance(route.points, totalLength / 2);
+    const mid = getPointAtDistance(route.points, len / 2);
+
+    return { flatPoints: flat, arrows: arrowList, midPoint: mid, totalLength: len };
+  }, [route.points, route.showArrows, route.arrowSpacing]);
+
+  if (route.points.length < 2) return null;
 
   return (
     <Group onClick={onSelect} onTap={onSelect}>
@@ -93,7 +95,7 @@ export function CanvasRoute({ route, isSelected, onSelect }: CanvasRouteProps) {
       {/* Fleches de direction */}
       {arrows.map((arrow, i) => (
         <RegularPolygon
-          key={`arrow-${i}`}
+          key={i}
           x={arrow.x}
           y={arrow.y}
           sides={3}
@@ -101,11 +103,12 @@ export function CanvasRoute({ route, isSelected, onSelect }: CanvasRouteProps) {
           rotation={arrow.rotation}
           fill={route.color}
           opacity={0.8}
+          listening={false}
         />
       ))}
 
       {/* Label de la route */}
-      {route.label && (
+      {route.label && midPoint && (
         <Text
           x={midPoint.point.x - 40}
           y={midPoint.point.y - 20}
@@ -115,6 +118,7 @@ export function CanvasRoute({ route, isSelected, onSelect }: CanvasRouteProps) {
           fontStyle="bold"
           fill={route.color}
           padding={4}
+          listening={false}
         />
       )}
 
@@ -122,7 +126,7 @@ export function CanvasRoute({ route, isSelected, onSelect }: CanvasRouteProps) {
       {isSelected &&
         route.points.map((point, i) => (
           <RegularPolygon
-            key={`ctrl-${i}`}
+            key={i}
             x={point.x}
             y={point.y}
             sides={4}
@@ -136,4 +140,4 @@ export function CanvasRoute({ route, isSelected, onSelect }: CanvasRouteProps) {
         ))}
     </Group>
   );
-}
+});

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, memo } from 'react';
 import { Group, Rect, Text, Image as KonvaImage, Circle, Transformer } from 'react-konva';
 import type Konva from 'konva';
 import type { PlanElement } from '@/types';
@@ -13,7 +13,12 @@ interface CanvasElementProps {
   onDragEnd: (x: number, y: number) => void;
 }
 
-export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: CanvasElementProps) {
+export const CanvasElement = memo(function CanvasElement({
+  element,
+  isSelected,
+  onSelect,
+  onDragEnd,
+}: CanvasElementProps) {
   const groupRef = useRef<Konva.Group>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const [iconImage, setIconImage] = useState<HTMLImageElement | null>(null);
@@ -45,6 +50,7 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
 
   const badgeSize = 22;
   const showBadge = element.type === 'station' && element.stationNumber !== undefined;
+  const iconSize = Math.min(element.width, element.height) * 0.6;
 
   return (
     <>
@@ -55,7 +61,7 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
         width={element.width}
         height={element.height}
         rotation={element.rotation}
-        draggable={!element.locked && true}
+        draggable={!element.locked}
         onClick={onSelect}
         onTap={onSelect}
         onDragEnd={handleDragEnd}
@@ -76,10 +82,11 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
         {iconImage && (
           <KonvaImage
             image={iconImage}
-            x={element.width / 2 - Math.min(element.width, element.height) * 0.3}
-            y={element.height / 2 - Math.min(element.width, element.height) * 0.3}
-            width={Math.min(element.width, element.height) * 0.6}
-            height={Math.min(element.width, element.height) * 0.6}
+            x={element.width / 2 - iconSize / 2}
+            y={element.height / 2 - iconSize / 2}
+            width={iconSize}
+            height={iconSize}
+            listening={false}
           />
         )}
 
@@ -93,6 +100,7 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
           fontFamily="Inter, sans-serif"
           fill="#374151"
           align="center"
+          listening={false}
         />
 
         {/* Badge numero de station */}
@@ -103,6 +111,7 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
               y={-2}
               radius={badgeSize / 2}
               fill={element.color}
+              listening={false}
             />
             <Text
               text={String(element.stationNumber)}
@@ -116,6 +125,7 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
               fill="#FFFFFF"
               align="center"
               verticalAlign="middle"
+              listening={false}
             />
           </>
         )}
@@ -127,6 +137,7 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
             x={-4}
             y={-16}
             fontSize={12}
+            listening={false}
           />
         )}
       </Group>
@@ -148,4 +159,4 @@ export function CanvasElement({ element, isSelected, onSelect, onDragEnd }: Canv
       )}
     </>
   );
-}
+});

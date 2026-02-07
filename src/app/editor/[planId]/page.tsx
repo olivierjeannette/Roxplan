@@ -40,20 +40,14 @@ export default function EditorPage() {
   const [showExport, setShowExport] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
 
-  const {
-    planName,
-    setPlanName,
-    loadPlan,
-    elements,
-    routes,
-    backgroundType,
-    backgroundImageUrl,
-    backgroundOpacity,
-    isDirty,
-    markClean,
-    isSaving,
-    setSaveStatus,
-  } = useEditorStore();
+  // Subscribe to individual store slices to avoid full re-renders
+  const planName = useEditorStore((s) => s.planName);
+  const setPlanName = useEditorStore((s) => s.setPlanName);
+  const loadPlan = useEditorStore((s) => s.loadPlan);
+  const isDirty = useEditorStore((s) => s.isDirty);
+  const markClean = useEditorStore((s) => s.markClean);
+  const isSaving = useEditorStore((s) => s.isSaving);
+  const setSaveStatus = useEditorStore((s) => s.setSaveStatus);
 
   // Charger le plan depuis localStorage
   useEffect(() => {
@@ -82,16 +76,18 @@ export default function EditorPage() {
     }
   }, [planId, loadPlan]);
 
-  // Auto-save avec debounce
+  // Auto-save with debounce — only depends on isDirty flag, reads state at save time
   useEffect(() => {
     if (!isDirty) return;
     const timeout = setTimeout(() => {
       savePlan();
     }, 2000);
     return () => clearTimeout(timeout);
-  }, [isDirty, elements, routes, planName, backgroundType, backgroundImageUrl, backgroundOpacity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDirty]);
 
   const savePlan = useCallback(() => {
+    const state = useEditorStore.getState();
     setSaveStatus(true);
     try {
       const stored = localStorage.getItem('roxplan_plans');
@@ -101,15 +97,15 @@ export default function EditorPage() {
       const updatedPlan: Plan = {
         id: planId,
         userId: 'local',
-        name: planName,
-        eventType: useEditorStore.getState().eventType,
-        canvasWidth: useEditorStore.getState().canvasWidth,
-        canvasHeight: useEditorStore.getState().canvasHeight,
-        backgroundType,
-        backgroundImageUrl: backgroundImageUrl ?? undefined,
-        backgroundOpacity,
-        elements,
-        routes,
+        name: state.planName,
+        eventType: state.eventType,
+        canvasWidth: state.canvasWidth,
+        canvasHeight: state.canvasHeight,
+        backgroundType: state.backgroundType,
+        backgroundImageUrl: state.backgroundImageUrl ?? undefined,
+        backgroundOpacity: state.backgroundOpacity,
+        elements: state.elements,
+        routes: state.routes,
         isPublic: false,
         createdAt: idx >= 0 ? plans[idx].createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -127,7 +123,7 @@ export default function EditorPage() {
       // Ignore
     }
     setSaveStatus(false);
-  }, [planId, planName, elements, routes, backgroundType, backgroundImageUrl, backgroundOpacity, markClean, setSaveStatus]);
+  }, [planId, markClean, setSaveStatus]);
 
   // Resize canvas
   useEffect(() => {

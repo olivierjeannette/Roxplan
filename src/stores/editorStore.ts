@@ -3,6 +3,10 @@ import type { PlanElement, Route, ActiveTool, BackgroundType, HistoryEntry } fro
 import { generateId } from '@/lib/utils';
 
 const MAX_HISTORY = 50;
+const HISTORY_DEBOUNCE_MS = 300;
+
+// Debounce timer for history snapshots
+let historyTimer: ReturnType<typeof setTimeout> | null = null;
 
 interface EditorState {
   // Plan metadata
@@ -126,6 +130,33 @@ const initialState = {
   isDirty: false,
 };
 
+/**
+ * Debounced history snapshot: captures state BEFORE a series of rapid changes.
+ * Only saves a snapshot if no other snapshot was saved in the last HISTORY_DEBOUNCE_MS.
+ */
+function snapshotHistoryImmediate(get: () => EditorState, set: (partial: Partial<EditorState>) => void) {
+  const state = get();
+  const entry: HistoryEntry = {
+    elements: JSON.parse(JSON.stringify(state.elements)),
+    routes: JSON.parse(JSON.stringify(state.routes)),
+    timestamp: Date.now(),
+  };
+  const newHistory = state.history.slice(0, state.historyIndex + 1);
+  newHistory.push(entry);
+  if (newHistory.length > MAX_HISTORY) newHistory.shift();
+  set({ history: newHistory, historyIndex: newHistory.length - 1 });
+}
+
+function debouncedSnapshot(get: () => EditorState, set: (partial: Partial<EditorState>) => void) {
+  if (historyTimer) return; // Already scheduled — a snapshot was recently taken
+  // Take snapshot of current state BEFORE the change
+  snapshotHistoryImmediate(get, set);
+  // Block further snapshots for HISTORY_DEBOUNCE_MS
+  historyTimer = setTimeout(() => {
+    historyTimer = null;
+  }, HISTORY_DEBOUNCE_MS);
+}
+
 export const useEditorStore = create<EditorState>((set, get) => ({
   ...initialState,
 
@@ -141,8 +172,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // Elements
   addElement: (element) => {
+    snapshotHistoryImmediate(get, set);
     const state = get();
-    state.pushHistory();
     const maxZ = state.elements.reduce((max, el) => Math.max(max, el.zIndex), 0);
     const newElement: PlanElement = {
       ...element,
@@ -157,10 +188,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   updateElement: (id, updates) => {
-    const state = get();
-    state.pushHistory();
+    debouncedSnapshot(get, set);
     set({
-      elements: state.elements.map((el) =>
+      elements: get().elements.map((el) =>
         el.id === id ? { ...el, ...updates } : el
       ),
       isDirty: true,
@@ -168,8 +198,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   removeElement: (id) => {
+    snapshotHistoryImmediate(get, set);
     const state = get();
-    state.pushHistory();
     set({
       elements: state.elements.filter((el) => el.id !== id),
       selectedElementId: state.selectedElementId === id ? null : state.selectedElementId,
@@ -181,7 +211,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const state = get();
     const element = state.elements.find((el) => el.id === id);
     if (!element) return;
-    state.pushHistory();
+    snapshotHistoryImmediate(get, set);
     const maxZ = state.elements.reduce((max, el) => Math.max(max, el.zIndex), 0);
     const newElement: PlanElement = {
       ...element,
@@ -191,7 +221,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       zIndex: maxZ + 1,
     };
     set({
-      elements: [...state.elements, newElement],
+      elements: [...get().elements, newElement],
       selectedElementId: newElement.id,
       isDirty: true,
     });
@@ -199,21 +229,19 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // Routes
   addRoute: (route) => {
-    const state = get();
-    state.pushHistory();
+    snapshotHistoryImmediate(get, set);
     const newRoute: Route = { ...route, id: generateId() };
     set({
-      routes: [...state.routes, newRoute],
+      routes: [...get().routes, newRoute],
       selectedRouteId: newRoute.id,
       isDirty: true,
     });
   },
 
   updateRoute: (id, updates) => {
-    const state = get();
-    state.pushHistory();
+    debouncedSnapshot(get, set);
     set({
-      routes: state.routes.map((r) =>
+      routes: get().routes.map((r) =>
         r.id === id ? { ...r, ...updates } : r
       ),
       isDirty: true,
@@ -221,8 +249,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   removeRoute: (id) => {
+    snapshotHistoryImmediate(get, set);
     const state = get();
-    state.pushHistory();
     set({
       routes: state.routes.filter((r) => r.id !== id),
       selectedRouteId: state.selectedRouteId === id ? null : state.selectedRouteId,
@@ -236,18 +264,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setBackgroundOpacity: (backgroundOpacity) => set({ backgroundOpacity, isDirty: true }),
 
   // History
-  pushHistory: () => {
-    const state = get();
-    const entry: HistoryEntry = {
-      elements: JSON.parse(JSON.stringify(state.elements)),
-      routes: JSON.parse(JSON.stringify(state.routes)),
-      timestamp: Date.now(),
-    };
-    const newHistory = state.history.slice(0, state.historyIndex + 1);
-    newHistory.push(entry);
-    if (newHistory.length > MAX_HISTORY) newHistory.shift();
-    set({ history: newHistory, historyIndex: newHistory.length - 1 });
-  },
+  pushHistory: () => snapshotHistoryImmediate(get, set),
 
   undo: () => {
     const state = get();
@@ -275,8 +292,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   // Auto numbering
   autoNumberStations: () => {
+    snapshotHistoryImmediate(get, set);
     const state = get();
-    state.pushHistory();
     const stations = state.elements
       .filter((el) => el.type === 'station')
       .sort((a, b) => a.y - b.y || a.x - b.x);

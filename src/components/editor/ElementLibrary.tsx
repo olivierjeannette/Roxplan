@@ -97,14 +97,16 @@ export function ElementLibrary() {
                       className="flex flex-col items-center p-2 rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing"
                       title={element.name}
                     >
-                      {/* Icone coloree */}
+                      {/* Icone SVG */}
                       <div
                         className="w-10 h-10 rounded-md flex items-center justify-center mb-1"
                         style={{ backgroundColor: `${element.color}15` }}
                       >
-                        <div
-                          className="w-5 h-5 rounded-sm"
-                          style={{ backgroundColor: element.color }}
+                        <img
+                          src={`/icons/elements/${element.icon}.svg`}
+                          alt={element.name}
+                          className="w-6 h-6"
+                          draggable={false}
                         />
                       </div>
                       {/* Nom */}

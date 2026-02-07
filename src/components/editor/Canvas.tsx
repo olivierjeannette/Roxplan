@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useCallback, useEffect } from 'react';
-import { Stage, Layer, Rect, Line, Group, Text } from 'react-konva';
+import { useRef, useCallback, useEffect, useState, useMemo, memo } from 'react';
+import { Stage, Layer, Rect, Line, Image as KonvaImage, Shape } from 'react-konva';
 import type Konva from 'konva';
 import { useEditorStore } from '@/stores/editorStore';
 import { CanvasElement } from './CanvasElement';
@@ -16,29 +16,74 @@ interface CanvasProps {
   stageRef?: React.RefObject<Konva.Stage | null>;
 }
 
+// Grid rendered as a single native Konva shape for performance
+const GridShape = memo(function GridShape({
+  canvasWidth,
+  canvasHeight,
+  opacity,
+}: {
+  canvasWidth: number;
+  canvasHeight: number;
+  opacity: number;
+}) {
+  return (
+    <Shape
+      sceneFunc={(context) => {
+        context.beginPath();
+        context.strokeStyle = GRID_COLOR;
+        context.lineWidth = 0.5;
+        context.globalAlpha = opacity;
+        for (let x = 0; x <= canvasWidth; x += GRID_SIZE) {
+          context.moveTo(x, 0);
+          context.lineTo(x, canvasHeight);
+        }
+        for (let y = 0; y <= canvasHeight; y += GRID_SIZE) {
+          context.moveTo(0, y);
+          context.lineTo(canvasWidth, y);
+        }
+        context.stroke();
+      }}
+    />
+  );
+});
+
 export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProps) {
   const internalRef = useRef<Konva.Stage>(null);
   const stageRef = externalStageRef || internalRef;
 
-  const {
-    zoom,
-    panX,
-    panY,
-    activeTool,
-    selectedElementId,
-    elements,
-    routes,
-    backgroundType,
-    backgroundOpacity,
-    canvasWidth,
-    canvasHeight,
-    setZoom,
-    setPan,
-    selectElement,
-    selectRoute,
-    updateElement,
-    addRoute,
-  } = useEditorStore();
+  // Subscribe to store slices individually to avoid full re-renders
+  const zoom = useEditorStore((s) => s.zoom);
+  const panX = useEditorStore((s) => s.panX);
+  const panY = useEditorStore((s) => s.panY);
+  const activeTool = useEditorStore((s) => s.activeTool);
+  const selectedElementId = useEditorStore((s) => s.selectedElementId);
+  const elements = useEditorStore((s) => s.elements);
+  const routes = useEditorStore((s) => s.routes);
+  const backgroundType = useEditorStore((s) => s.backgroundType);
+  const backgroundImageUrl = useEditorStore((s) => s.backgroundImageUrl);
+  const backgroundOpacity = useEditorStore((s) => s.backgroundOpacity);
+  const canvasWidth = useEditorStore((s) => s.canvasWidth);
+  const canvasHeight = useEditorStore((s) => s.canvasHeight);
+  const selectedRouteId = useEditorStore((s) => s.selectedRouteId);
+
+  const setZoom = useEditorStore((s) => s.setZoom);
+  const setPan = useEditorStore((s) => s.setPan);
+  const selectElement = useEditorStore((s) => s.selectElement);
+  const selectRoute = useEditorStore((s) => s.selectRoute);
+  const updateElement = useEditorStore((s) => s.updateElement);
+  const addRoute = useEditorStore((s) => s.addRoute);
+
+  // Background image loading
+  const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    if (backgroundType === 'image' && backgroundImageUrl) {
+      const img = new window.Image();
+      img.src = backgroundImageUrl;
+      img.onload = () => setBgImage(img);
+    } else {
+      setBgImage(null);
+    }
+  }, [backgroundType, backgroundImageUrl]);
 
   // Points temporaires pour le dessin de route
   const drawingPointsRef = useRef<{ x: number; y: number }[]>([]);
@@ -51,20 +96,21 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
       const stage = stageRef.current;
       if (!stage) return;
 
-      const oldScale = zoom;
+      const oldScale = stage.scaleX();
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
 
       const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
-      setZoom(newScale);
+      const clampedScale = Math.max(0.1, Math.min(5, newScale));
+      setZoom(clampedScale);
 
       const mousePointTo = {
-        x: (pointer.x - panX) / oldScale,
-        y: (pointer.y - panY) / oldScale,
+        x: (pointer.x - stage.x()) / oldScale,
+        y: (pointer.y - stage.y()) / oldScale,
       };
-      setPan(pointer.x - mousePointTo.x * newScale, pointer.y - mousePointTo.y * newScale);
+      setPan(pointer.x - mousePointTo.x * clampedScale, pointer.y - mousePointTo.y * clampedScale);
     },
-    [zoom, panX, panY, setZoom, setPan, stageRef]
+    [setZoom, setPan, stageRef]
   );
 
   // Click sur le stage (deselection ou dessin de route)
@@ -82,14 +128,15 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
         if (!stage) return;
         const pointer = stage.getPointerPosition();
         if (!pointer) return;
+        const scale = stage.scaleX();
         const point = {
-          x: (pointer.x - panX) / zoom,
-          y: (pointer.y - panY) / zoom,
+          x: (pointer.x - stage.x()) / scale,
+          y: (pointer.y - stage.y()) / scale,
         };
         drawingPointsRef.current.push(point);
       }
     },
-    [activeTool, selectElement, selectRoute, stageRef, panX, panY, zoom]
+    [activeTool, selectElement, selectRoute, stageRef]
   );
 
   // Double-click pour finir le dessin de route
@@ -114,40 +161,19 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
     [updateElement]
   );
 
-  // Grille de fond
-  const renderGrid = useCallback(() => {
-    if (backgroundType !== 'grid') return null;
-    const lines = [];
-    // Lignes verticales
-    for (let x = 0; x <= canvasWidth; x += GRID_SIZE) {
-      lines.push(
-        <Line
-          key={`v-${x}`}
-          points={[x, 0, x, canvasHeight]}
-          stroke={GRID_COLOR}
-          strokeWidth={0.5}
-          opacity={backgroundOpacity / 100}
-        />
-      );
-    }
-    // Lignes horizontales
-    for (let y = 0; y <= canvasHeight; y += GRID_SIZE) {
-      lines.push(
-        <Line
-          key={`h-${y}`}
-          points={[0, y, canvasWidth, y]}
-          stroke={GRID_COLOR}
-          strokeWidth={0.5}
-          opacity={backgroundOpacity / 100}
-        />
-      );
-    }
-    return lines;
-  }, [backgroundType, backgroundOpacity, canvasWidth, canvasHeight]);
+  // Sorted elements (memoized)
+  const sortedElements = useMemo(
+    () => [...elements].sort((a, b) => a.zIndex - b.zIndex),
+    [elements]
+  );
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const state = useEditorStore.getState();
         if (state.selectedElementId) {
@@ -192,9 +218,25 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
       style={{ backgroundColor: backgroundType === 'blank' ? '#FFFFFF' : '#F9FAFB' }}
     >
       {/* Layer 1: Background */}
-      <Layer>
+      <Layer listening={false}>
         <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="#FFFFFF" />
-        {renderGrid()}
+        {backgroundType === 'image' && bgImage && (
+          <KonvaImage
+            image={bgImage}
+            x={0}
+            y={0}
+            width={canvasWidth}
+            height={canvasHeight}
+            opacity={backgroundOpacity / 100}
+          />
+        )}
+        {backgroundType === 'grid' && (
+          <GridShape
+            canvasWidth={canvasWidth}
+            canvasHeight={canvasHeight}
+            opacity={backgroundOpacity / 100}
+          />
+        )}
       </Layer>
 
       {/* Layer 2: Routes / Parcours */}
@@ -203,7 +245,7 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
           <CanvasRoute
             key={route.id}
             route={route}
-            isSelected={useEditorStore.getState().selectedRouteId === route.id}
+            isSelected={selectedRouteId === route.id}
             onSelect={() => selectRoute(route.id)}
           />
         ))}
@@ -211,17 +253,15 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
 
       {/* Layer 3: Elements */}
       <Layer>
-        {[...elements]
-          .sort((a, b) => a.zIndex - b.zIndex)
-          .map((element) => (
-            <CanvasElement
-              key={element.id}
-              element={element}
-              isSelected={selectedElementId === element.id}
-              onSelect={() => selectElement(element.id)}
-              onDragEnd={(x, y) => handleElementDragEnd(element.id, x, y)}
-            />
-          ))}
+        {sortedElements.map((element) => (
+          <CanvasElement
+            key={element.id}
+            element={element}
+            isSelected={selectedElementId === element.id}
+            onSelect={() => selectElement(element.id)}
+            onDragEnd={(x, y) => handleElementDragEnd(element.id, x, y)}
+          />
+        ))}
       </Layer>
     </Stage>
   );
