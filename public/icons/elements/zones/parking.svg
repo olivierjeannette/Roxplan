@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- square border -->
+  <rect x="2" y="2" width="20" height="20" rx="3" />
+  <!-- letter P -->
+  <path d="M9 18V6h4a4 4 0 0 1 0 8H9" />
+</svg>

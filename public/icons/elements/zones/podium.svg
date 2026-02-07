@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- podium step 2 (left, shorter) -->
+  <rect x="1" y="14" width="7" height="8" />
+  <!-- podium step 1 (center, tallest) -->
+  <rect x="8" y="8" width="8" height="14" />
+  <!-- podium step 3 (right, shortest) -->
+  <rect x="16" y="17" width="7" height="5" />
+  <!-- numbers -->
+  <text x="4.5" y="19" text-anchor="middle" fill="currentColor" stroke="none" font-size="5" font-weight="bold">2</text>
+  <text x="12" y="15" text-anchor="middle" fill="currentColor" stroke="none" font-size="5" font-weight="bold">1</text>
+  <text x="19.5" y="21" text-anchor="middle" fill="currentColor" stroke="none" font-size="4" font-weight="bold">3</text>
+  <!-- trophy/star on top -->
+  <polygon points="12,1 13.2,4.5 10.8,4.5" fill="currentColor" stroke="none" />
+  <polygon points="12,2 13.8,5 10.2,5" fill="none" />
+</svg>

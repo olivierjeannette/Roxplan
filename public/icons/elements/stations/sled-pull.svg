@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- head -->
+  <circle cx="7" cy="5" r="2" />
+  <!-- body leaning back -->
+  <line x1="7" y1="7" x2="5" y2="13" />
+  <!-- legs bracing -->
+  <line x1="5" y1="13" x2="3" y2="20" />
+  <line x1="5" y1="13" x2="7" y2="20" />
+  <!-- arms pulling rope back -->
+  <line x1="7" y1="9" x2="11" y2="8" />
+  <line x1="6" y1="10" x2="11" y2="8" />
+  <!-- rope -->
+  <line x1="11" y1="8" x2="17" y2="10" stroke-dasharray="2 1" />
+  <!-- sled -->
+  <rect x="17" y="7" width="4" height="6" rx="1" />
+  <line x1="17" y1="13" x2="16" y2="20" />
+  <line x1="21" y1="13" x2="22" y2="20" />
+  <line x1="15" y1="20" x2="23" y2="20" />
+</svg>

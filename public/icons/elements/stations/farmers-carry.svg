@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- head -->
+  <circle cx="12" cy="3" r="2" />
+  <!-- body -->
+  <line x1="12" y1="5" x2="12" y2="13" />
+  <!-- legs walking -->
+  <line x1="12" y1="13" x2="9" y2="20" />
+  <line x1="12" y1="13" x2="15" y2="20" />
+  <!-- left arm down holding weight -->
+  <line x1="10" y1="7" x2="6" y2="14" />
+  <!-- right arm down holding weight -->
+  <line x1="14" y1="7" x2="18" y2="14" />
+  <!-- left weight -->
+  <rect x="4" y="13" width="4" height="5" rx="0.5" />
+  <!-- right weight -->
+  <rect x="16" y="13" width="4" height="5" rx="0.5" />
+</svg>

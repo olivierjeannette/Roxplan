@@ -1,0 +1,24 @@
+{
+  "project": "RoxPlan",
+  "description": "Editeur 2D de plans de parcours fitness (HYROX, CrossFit, Spartan)",
+  "stack": {
+    "framework": "Next.js 14 (App Router)",
+    "language": "TypeScript",
+    "styling": "Tailwind CSS",
+    "canvas": "Konva.js (react-konva)",
+    "state": "Zustand",
+    "database": "Neon (PostgreSQL)",
+    "orm": "Drizzle ORM",
+    "storage": "Vercel Blob",
+    "deploy": "Vercel",
+    "icons": "Lucide React",
+    "ui": "Radix UI"
+  },
+  "conventions": {
+    "components": "PascalCase, 'use client' pour composants interactifs",
+    "files": "kebab-case pour les fichiers, PascalCase pour les composants",
+    "styles": "Tailwind CSS uniquement, pas de CSS modules",
+    "state": "Zustand stores dans /stores/, pas de React Context",
+    "api": "Route Handlers Next.js dans /app/api/"
+  }
+}
