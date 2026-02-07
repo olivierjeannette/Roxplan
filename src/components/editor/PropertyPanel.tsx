@@ -187,6 +187,96 @@ export function PropertyPanel() {
             />
           </div>
 
+          {/* Style de fond (zones, shapes, stations) */}
+          {selectedElement.type !== 'barrier' && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 block mb-1">Style de fond</label>
+              <select
+                value={selectedElement.fillStyle || 'transparent'}
+                onChange={(e) =>
+                  updateElement(selectedElement.id, {
+                    fillStyle: e.target.value as 'solid' | 'transparent' | 'none',
+                  })
+                }
+                className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-md"
+              >
+                <option value="solid">Plein</option>
+                <option value="transparent">Semi-transparent</option>
+                <option value="none">Contour seul</option>
+              </select>
+            </div>
+          )}
+
+          {/* Opacite du fond */}
+          {selectedElement.type !== 'barrier' && selectedElement.fillStyle === 'solid' && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 block mb-1">
+                Opacite fond: {Math.round((selectedElement.fillOpacity ?? 0.4) * 100)}%
+              </label>
+              <input
+                type="range"
+                min={5}
+                max={100}
+                value={(selectedElement.fillOpacity ?? 0.4) * 100}
+                onChange={(e) =>
+                  updateElement(selectedElement.id, { fillOpacity: Number(e.target.value) / 100 })
+                }
+                className="w-full"
+              />
+            </div>
+          )}
+
+          {/* Epaisseur du contour / ligne */}
+          {(selectedElement.type === 'barrier' || selectedElement.fillStyle === 'none') && (
+            <div>
+              <label className="text-xs font-medium text-gray-500 block mb-1">
+                Epaisseur: {selectedElement.strokeWidth || (selectedElement.type === 'barrier' ? 6 : 1)}px
+              </label>
+              <input
+                type="range"
+                min={1}
+                max={selectedElement.type === 'barrier' ? 20 : 10}
+                value={selectedElement.strokeWidth || (selectedElement.type === 'barrier' ? 6 : 1)}
+                onChange={(e) =>
+                  updateElement(selectedElement.id, { strokeWidth: Number(e.target.value) })
+                }
+                className="w-full"
+              />
+            </div>
+          )}
+
+          {/* Afficher/masquer l'icone */}
+          {selectedElement.icon && selectedElement.type !== 'barrier' && (
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-gray-500">Afficher icone</label>
+              <input
+                type="checkbox"
+                checked={selectedElement.showIcon !== false}
+                onChange={(e) =>
+                  updateElement(selectedElement.id, { showIcon: e.target.checked })
+                }
+                className="rounded"
+              />
+            </div>
+          )}
+
+          {/* Taille du texte */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 block mb-1">
+              Taille texte: {selectedElement.fontSize || 11}px
+            </label>
+            <input
+              type="range"
+              min={8}
+              max={32}
+              value={selectedElement.fontSize || 11}
+              onChange={(e) =>
+                updateElement(selectedElement.id, { fontSize: Number(e.target.value) })
+              }
+              className="w-full"
+            />
+          </div>
+
           {/* Reps (pour stations) */}
           {selectedElement.type === 'station' && (
             <div>

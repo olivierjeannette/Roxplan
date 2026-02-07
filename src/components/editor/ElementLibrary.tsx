@@ -37,6 +37,11 @@ export function ElementLibrary() {
         color: def.color,
         opacity: 1,
         exerciseType: def.exerciseType,
+        fillStyle: def.fillStyle,
+        fillOpacity: def.fillOpacity,
+        strokeWidth: def.strokeWidth,
+        dashPattern: def.dashPattern,
+        showIcon: def.showIcon,
         locked: false,
         visible: true,
       };
@@ -97,17 +102,44 @@ export function ElementLibrary() {
                       className="flex flex-col items-center p-2 rounded-md border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors cursor-grab active:cursor-grabbing"
                       title={element.name}
                     >
-                      {/* Icone SVG */}
+                      {/* Preview */}
                       <div
                         className="w-10 h-10 rounded-md flex items-center justify-center mb-1"
                         style={{ backgroundColor: `${element.color}15` }}
                       >
-                        <img
-                          src={`/icons/elements/${element.icon}.svg`}
-                          alt={element.name}
-                          className="w-6 h-6"
-                          draggable={false}
-                        />
+                        {element.type === 'barrier' ? (
+                          <div
+                            className="rounded-full"
+                            style={{
+                              width: '80%',
+                              height: Math.max(3, element.strokeWidth || 4),
+                              backgroundColor: element.color,
+                            }}
+                          />
+                        ) : element.type === 'shape' ? (
+                          <div
+                            className="rounded-sm"
+                            style={{
+                              width: '70%',
+                              height: '60%',
+                              backgroundColor: element.fillStyle === 'none' ? 'transparent' : element.color,
+                              opacity: element.fillOpacity ?? 0.4,
+                              border: `2px solid ${element.color}`,
+                            }}
+                          />
+                        ) : element.icon ? (
+                          <img
+                            src={`/icons/elements/${element.icon}.svg`}
+                            alt={element.name}
+                            className="w-6 h-6"
+                            draggable={false}
+                          />
+                        ) : (
+                          <div
+                            className="w-5 h-5 rounded-sm"
+                            style={{ backgroundColor: element.color }}
+                          />
+                        )}
                       </div>
                       {/* Nom */}
                       <span className="text-[10px] text-gray-600 text-center leading-tight line-clamp-2">

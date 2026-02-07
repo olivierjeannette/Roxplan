@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback, memo } from 'react';
-import { Group, Rect, Text, Image as KonvaImage, Circle, Transformer } from 'react-konva';
+import { Group, Rect, Text, Image as KonvaImage, Circle, Line, Transformer } from 'react-konva';
 import type Konva from 'konva';
 import type { PlanElement } from '@/types';
 import { getCachedIcon } from '@/lib/icons';
@@ -23,12 +23,16 @@ export const CanvasElement = memo(function CanvasElement({
   const transformerRef = useRef<Konva.Transformer>(null);
   const [iconImage, setIconImage] = useState<HTMLImageElement | null>(null);
 
+  const showIcon = element.showIcon !== false && !!element.icon;
+
   // Charger l'icone SVG
   useEffect(() => {
-    if (element.icon) {
+    if (showIcon) {
       getCachedIcon(element.icon).then(setIconImage).catch(() => setIconImage(null));
+    } else {
+      setIconImage(null);
     }
-  }, [element.icon]);
+  }, [element.icon, showIcon]);
 
   // Attacher le transformer quand selectionne
   useEffect(() => {
@@ -48,9 +52,41 @@ export const CanvasElement = memo(function CanvasElement({
 
   if (!element.visible) return null;
 
+  const isBarrier = element.type === 'barrier';
+  const isShape = element.type === 'shape';
+  const fillStyle = element.fillStyle || 'transparent';
   const badgeSize = 22;
   const showBadge = element.type === 'station' && element.stationNumber !== undefined;
   const iconSize = Math.min(element.width, element.height) * 0.6;
+
+  // Determine fill and stroke based on fillStyle
+  let rectFill: string | undefined;
+  let rectFillOpacity: number;
+  let rectStroke: string;
+  let rectStrokeWidth: number;
+
+  if (fillStyle === 'solid') {
+    rectFill = element.color;
+    rectFillOpacity = element.fillOpacity ?? 0.4;
+    rectStroke = isSelected ? '#3B82F6' : element.color;
+    rectStrokeWidth = isSelected ? 2 : (element.strokeWidth || 1);
+  } else if (fillStyle === 'none') {
+    rectFill = undefined;
+    rectFillOpacity = 0;
+    rectStroke = isSelected ? '#3B82F6' : element.color;
+    rectStrokeWidth = element.strokeWidth || 3;
+  } else {
+    // transparent (default for stations, zones, etc.)
+    rectFill = element.color;
+    rectFillOpacity = 0.15;
+    rectStroke = isSelected ? '#3B82F6' : element.color;
+    rectStrokeWidth = isSelected ? 2 : 1;
+  }
+
+  // Transformer anchors: barriers only resize horizontally
+  const transformerAnchors = isBarrier
+    ? ['middle-left', 'middle-right'] as string[]
+    : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center'];
 
   return (
     <>
@@ -67,19 +103,42 @@ export const CanvasElement = memo(function CanvasElement({
         onDragEnd={handleDragEnd}
         opacity={element.opacity}
       >
-        {/* Fond de l'element */}
-        <Rect
-          width={element.width}
-          height={element.height}
-          fill={element.color}
-          cornerRadius={element.type === 'zone' ? 8 : 4}
-          opacity={0.15}
-          stroke={isSelected ? '#3B82F6' : element.color}
-          strokeWidth={isSelected ? 2 : 1}
-        />
+        {isBarrier ? (
+          <>
+            {/* Barrier = line */}
+            <Line
+              points={[0, element.height / 2, element.width, element.height / 2]}
+              stroke={isSelected ? '#3B82F6' : element.color}
+              strokeWidth={element.strokeWidth || 6}
+              lineCap="round"
+              dash={element.dashPattern}
+              hitStrokeWidth={Math.max(12, (element.strokeWidth || 6) + 8)}
+            />
+            {/* Invisible rect for easier selection/dragging */}
+            <Rect
+              width={element.width}
+              height={Math.max(element.height, 14)}
+              y={element.height / 2 - Math.max(element.height, 14) / 2}
+              fill="transparent"
+            />
+          </>
+        ) : (
+          <>
+            {/* Fond de l'element */}
+            <Rect
+              width={element.width}
+              height={element.height}
+              fill={rectFill}
+              cornerRadius={element.type === 'zone' || isShape ? 8 : 4}
+              opacity={rectFillOpacity}
+              stroke={rectStroke}
+              strokeWidth={rectStrokeWidth}
+            />
+          </>
+        )}
 
         {/* Icone SVG */}
-        {iconImage && (
+        {iconImage && showIcon && (
           <KonvaImage
             image={iconImage}
             x={element.width / 2 - iconSize / 2}
@@ -93,8 +152,8 @@ export const CanvasElement = memo(function CanvasElement({
         {/* Label */}
         <Text
           text={element.label}
-          x={0}
-          y={element.height + 4}
+          x={isBarrier ? 0 : 0}
+          y={isBarrier ? element.height / 2 + (element.strokeWidth || 6) / 2 + 4 : element.height + 4}
           width={element.width}
           fontSize={element.fontSize || 11}
           fontFamily="Inter, sans-serif"
@@ -147,11 +206,12 @@ export const CanvasElement = memo(function CanvasElement({
         <Transformer
           ref={transformerRef}
           rotateEnabled={true}
-          enabledAnchors={[
-            'top-left', 'top-right', 'bottom-left', 'bottom-right',
-            'middle-left', 'middle-right', 'top-center', 'bottom-center',
-          ]}
+          enabledAnchors={transformerAnchors}
           boundBoxFunc={(oldBox, newBox) => {
+            if (isBarrier) {
+              if (newBox.width < 20) return oldBox;
+              return { ...newBox, height: oldBox.height };
+            }
             if (newBox.width < 20 || newBox.height < 20) return oldBox;
             return newBox;
           }}

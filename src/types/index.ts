@@ -1,6 +1,6 @@
 // ==================== PLAN ELEMENT TYPES ====================
 
-export type ElementType = 'station' | 'zone' | 'marker' | 'text' | 'arrow';
+export type ElementType = 'station' | 'zone' | 'marker' | 'text' | 'arrow' | 'barrier' | 'shape';
 
 export type ExerciseType =
   | 'skierg'
@@ -13,7 +13,8 @@ export type ExerciseType =
   | 'wall_balls'
   | 'custom';
 
-export type ElementCategory = 'station' | 'zone' | 'equipment' | 'marker';
+export type ElementCategory = 'station' | 'zone' | 'equipment' | 'marker' | 'structure';
+export type FillStyle = 'solid' | 'transparent' | 'none';
 
 export interface PlanElement {
   id: string;
@@ -33,6 +34,11 @@ export interface PlanElement {
   color: string;
   opacity: number;
   fontSize?: number;
+  fillStyle?: FillStyle;       // solid = fond plein, transparent = semi-transparent, none = pas de fond
+  fillOpacity?: number;        // opacite du fond (0-1)
+  strokeWidth?: number;        // epaisseur du contour / de la ligne (barriers)
+  dashPattern?: number[];      // pattern pointille [trait, espace] (barriers)
+  showIcon?: boolean;          // afficher ou cacher l'icone
 
   // Métadonnées station
   exerciseType?: ExerciseType;
@@ -108,6 +114,11 @@ export interface ElementDefinition {
   defaultWidth: number;
   defaultHeight: number;
   exerciseType?: ExerciseType;
+  fillStyle?: FillStyle;
+  fillOpacity?: number;
+  strokeWidth?: number;
+  dashPattern?: number[];
+  showIcon?: boolean;
 }
 
 export interface ElementGroup {
