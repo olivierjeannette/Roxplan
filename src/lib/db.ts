@@ -1,0 +1,16 @@
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import * as schema from './schema';
+
+function getDb() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    // En dev sans DB configuree, on retourne null
+    // Les API routes doivent gerer ce cas
+    return null;
+  }
+  const sql = neon(url);
+  return drizzle(sql, { schema });
+}
+
+export const db = getDb();

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- horizontal barrier bar -->
+  <rect x="1" y="8" width="22" height="4" rx="1" />
+  <!-- diagonal stripes on barrier -->
+  <line x1="5" y1="8" x2="8" y2="12" />
+  <line x1="10" y1="8" x2="13" y2="12" />
+  <line x1="15" y1="8" x2="18" y2="12" />
+  <!-- left post -->
+  <line x1="4" y1="12" x2="4" y2="22" />
+  <line x1="2" y1="22" x2="6" y2="22" />
+  <!-- right post -->
+  <line x1="20" y1="12" x2="20" y2="22" />
+  <line x1="18" y1="22" x2="22" y2="22" />
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- bar -->
+  <line x1="1" y1="12" x2="23" y2="12" />
+  <!-- left outer plate -->
+  <rect x="2" y="6" width="2" height="12" rx="0.5" />
+  <!-- left inner plate -->
+  <rect x="5" y="7.5" width="2" height="9" rx="0.5" />
+  <!-- right inner plate -->
+  <rect x="17" y="7.5" width="2" height="9" rx="0.5" />
+  <!-- right outer plate -->
+  <rect x="20" y="6" width="2" height="12" rx="0.5" />
+  <!-- collar marks -->
+  <line x1="8" y1="10.5" x2="8" y2="13.5" />
+  <line x1="16" y1="10.5" x2="16" y2="13.5" />
+</svg>

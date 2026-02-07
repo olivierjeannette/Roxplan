@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- handle -->
+  <path d="M9 4a3 3 0 0 1 6 0" />
+  <!-- neck connecting handle to body -->
+  <line x1="9" y1="4" x2="8" y2="8" />
+  <line x1="15" y1="4" x2="16" y2="8" />
+  <!-- body (bell shape) -->
+  <ellipse cx="12" cy="15" rx="7" ry="7" />
+  <!-- flat bottom -->
+  <line x1="7" y1="20" x2="17" y2="20" />
+</svg>

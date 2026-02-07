@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- main frame horizontal -->
+  <line x1="2" y1="14" x2="20" y2="14" />
+  <!-- pad/cushion -->
+  <rect x="10" y="10" width="8" height="4" rx="2" />
+  <!-- foot holder/ankle pad -->
+  <rect x="2" y="11" width="4" height="3" rx="1" />
+  <!-- front leg -->
+  <line x1="18" y1="14" x2="20" y2="22" />
+  <!-- rear leg -->
+  <line x1="4" y1="14" x2="2" y2="22" />
+  <!-- support strut -->
+  <line x1="11" y1="14" x2="11" y2="22" />
+  <!-- foot base -->
+  <line x1="0" y1="22" x2="5" y2="22" />
+  <line x1="18" y1="22" x2="23" y2="22" />
+  <line x1="9" y1="22" x2="13" y2="22" />
+  <!-- height adjustment dots -->
+  <circle cx="6" cy="9" r="0.5" fill="currentColor" />
+  <circle cx="6" cy="7" r="0.5" fill="currentColor" />
+  <line x1="5" y1="5" x2="7" y2="5" />
+  <line x1="6" y1="5" x2="6" y2="14" />
+</svg>
