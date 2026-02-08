@@ -43,6 +43,7 @@ export function ElementLibrary() {
         strokeWidth: def.strokeWidth,
         dashPattern: def.dashPattern,
         showIcon: def.showIcon,
+        shapeForm: def.shapeForm,
         locked: false,
         visible: true,
       };
@@ -155,16 +156,49 @@ export function ElementLibrary() {
                                 }}
                               />
                             ) : element.type === 'shape' ? (
-                              <div
-                                className="rounded-sm"
-                                style={{
-                                  width: '70%',
-                                  height: '60%',
-                                  backgroundColor: element.fillStyle === 'none' ? 'transparent' : element.color,
-                                  opacity: element.fillOpacity ?? 0.4,
-                                  border: `2px solid ${element.color}`,
-                                }}
-                              />
+                              <svg width="28" height="24" viewBox="0 0 28 24">
+                                {element.shapeForm === 'circle' ? (
+                                  <circle
+                                    cx="14" cy="12" r="10"
+                                    fill={element.fillStyle === 'none' ? 'none' : element.color}
+                                    fillOpacity={element.fillOpacity ?? 0.4}
+                                    stroke={element.color}
+                                    strokeWidth="2"
+                                  />
+                                ) : element.shapeForm === 'diamond' ? (
+                                  <polygon
+                                    points="14,1 26,12 14,23 2,12"
+                                    fill={element.fillStyle === 'none' ? 'none' : element.color}
+                                    fillOpacity={element.fillOpacity ?? 0.4}
+                                    stroke={element.color}
+                                    strokeWidth="2"
+                                  />
+                                ) : element.shapeForm === 'hexagon' ? (
+                                  <polygon
+                                    points="7,1 21,1 27,12 21,23 7,23 1,12"
+                                    fill={element.fillStyle === 'none' ? 'none' : element.color}
+                                    fillOpacity={element.fillOpacity ?? 0.4}
+                                    stroke={element.color}
+                                    strokeWidth="2"
+                                  />
+                                ) : element.shapeForm === 'triangle' ? (
+                                  <polygon
+                                    points="14,1 27,23 1,23"
+                                    fill={element.fillStyle === 'none' ? 'none' : element.color}
+                                    fillOpacity={element.fillOpacity ?? 0.4}
+                                    stroke={element.color}
+                                    strokeWidth="2"
+                                  />
+                                ) : (
+                                  <rect
+                                    x="1" y="1" width="26" height="22" rx="3"
+                                    fill={element.fillStyle === 'none' ? 'none' : element.color}
+                                    fillOpacity={element.fillOpacity ?? 0.4}
+                                    stroke={element.color}
+                                    strokeWidth="2"
+                                  />
+                                )}
+                              </svg>
                             ) : element.icon ? (
                               <img
                                 src={`/icons/elements/${element.icon}.svg`}

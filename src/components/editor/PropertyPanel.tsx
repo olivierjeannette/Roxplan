@@ -4,6 +4,55 @@ import { motion } from 'framer-motion';
 import { useEditorStore } from '@/stores/editorStore';
 import { Trash2, Copy, Lock, Unlock, Eye, EyeOff, MousePointer } from 'lucide-react';
 import { StationNumbering } from './StationNumbering';
+import type { ShapeForm } from '@/types';
+
+const shapeOptions: { value: ShapeForm; label: string; icon: React.ReactNode }[] = [
+  {
+    value: 'rectangle',
+    label: 'Rect',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    value: 'circle',
+    label: 'Cercle',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    value: 'diamond',
+    label: 'Losange',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polygon points="8,1.5 14.5,8 8,14.5 1.5,8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      </svg>
+    ),
+  },
+  {
+    value: 'hexagon',
+    label: 'Hexa',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polygon points="4.5,1.5 11.5,1.5 15,8 11.5,14.5 4.5,14.5 1,8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      </svg>
+    ),
+  },
+  {
+    value: 'triangle',
+    label: 'Triangle',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polygon points="8,1.5 15,14 1,14" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      </svg>
+    ),
+  },
+];
 
 export function PropertyPanel() {
   const {
@@ -68,6 +117,40 @@ export function PropertyPanel() {
               {selectedElement.type}
             </span>
           </div>
+
+          {/* Shape form (non-barrier) */}
+          {selectedElement.type !== 'barrier' && (
+            <div>
+              <label className="text-[11px] font-medium block mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                Forme
+              </label>
+              <div className="grid grid-cols-5 gap-1">
+                {shapeOptions.map((opt) => {
+                  const isActive = (selectedElement.shapeForm || 'rectangle') === opt.value;
+                  return (
+                    <motion.button
+                      key={opt.value}
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() =>
+                        updateElement(selectedElement.id, { shapeForm: opt.value })
+                      }
+                      className="flex flex-col items-center gap-0.5 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: isActive ? 'var(--accent-light)' : 'var(--bg-secondary)',
+                        color: isActive ? 'var(--accent)' : 'var(--text-muted)',
+                        border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border-subtle)'}`,
+                      }}
+                      title={opt.label}
+                    >
+                      {opt.icon}
+                      <span className="text-[9px] font-medium">{opt.label}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Label */}
           <div>

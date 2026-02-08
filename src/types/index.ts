@@ -15,6 +15,7 @@ export type ExerciseType =
 
 export type ElementCategory = 'station' | 'zone' | 'equipment' | 'marker' | 'structure';
 export type FillStyle = 'solid' | 'transparent' | 'none';
+export type ShapeForm = 'rectangle' | 'circle' | 'diamond' | 'hexagon' | 'triangle';
 
 export interface PlanElement {
   id: string;
@@ -39,6 +40,7 @@ export interface PlanElement {
   strokeWidth?: number;        // epaisseur du contour / de la ligne (barriers)
   dashPattern?: number[];      // pattern pointille [trait, espace] (barriers)
   showIcon?: boolean;          // afficher ou cacher l'icone
+  shapeForm?: ShapeForm;       // forme visuelle: rectangle, circle, diamond, hexagon, triangle
 
   // Métadonnées station
   exerciseType?: ExerciseType;
@@ -119,6 +121,7 @@ export interface ElementDefinition {
   strokeWidth?: number;
   dashPattern?: number[];
   showIcon?: boolean;
+  shapeForm?: ShapeForm;
 }
 
 export interface ElementGroup {
