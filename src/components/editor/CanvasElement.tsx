@@ -22,6 +22,7 @@ function ShapeBody({
   stroke,
   strokeWidth,
   cornerRadius,
+  customPoints,
 }: {
   shapeForm: ShapeForm;
   width: number;
@@ -31,12 +32,39 @@ function ShapeBody({
   stroke: string;
   strokeWidth: number;
   cornerRadius: number;
+  customPoints?: { x: number; y: number }[];
 }) {
   const cx = width / 2;
   const cy = height / 2;
   const radius = Math.min(width, height) / 2;
 
   switch (shapeForm) {
+    case 'custom': {
+      if (!customPoints?.length) {
+        return (
+          <Rect
+            width={width}
+            height={height}
+            fill={fill}
+            cornerRadius={cornerRadius}
+            opacity={fillOpacity}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+          />
+        );
+      }
+      const flatPoints = customPoints.flatMap((p) => [p.x, p.y]);
+      return (
+        <Line
+          points={flatPoints}
+          closed={true}
+          fill={fill}
+          opacity={fillOpacity}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+        />
+      );
+    }
     case 'circle':
       return (
         <Circle
@@ -230,6 +258,7 @@ export const CanvasElement = memo(function CanvasElement({
               stroke={rectStroke}
               strokeWidth={rectStrokeWidth}
               cornerRadius={element.type === 'zone' || isShape ? 8 : 4}
+              customPoints={element.customPoints}
             />
           </>
         )}

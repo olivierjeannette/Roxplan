@@ -72,6 +72,8 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
   const selectRoute = useEditorStore((s) => s.selectRoute);
   const updateElement = useEditorStore((s) => s.updateElement);
   const addRoute = useEditorStore((s) => s.addRoute);
+  const addElement = useEditorStore((s) => s.addElement);
+  const setActiveTool = useEditorStore((s) => s.setActiveTool);
 
   // Background image loading
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null);
@@ -85,8 +87,9 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
     }
   }, [backgroundType, backgroundImageUrl]);
 
-  // Points temporaires pour le dessin de route
+  // Points temporaires pour le dessin de route / forme
   const drawingPointsRef = useRef<{ x: number; y: number }[]>([]);
+  const drawingShapePointsRef = useRef<{ x: number; y: number }[]>([]);
 
   // Zoom avec la molette
   const handleWheel = useCallback(
@@ -123,7 +126,7 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
         }
       }
 
-      if (activeTool === 'draw_route') {
+      if (activeTool === 'draw_route' || activeTool === 'draw_shape') {
         const stage = stageRef.current;
         if (!stage) return;
         const pointer = stage.getPointerPosition();
@@ -133,13 +136,17 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
           x: (pointer.x - stage.x()) / scale,
           y: (pointer.y - stage.y()) / scale,
         };
-        drawingPointsRef.current.push(point);
+        if (activeTool === 'draw_route') {
+          drawingPointsRef.current.push(point);
+        } else {
+          drawingShapePointsRef.current.push(point);
+        }
       }
     },
     [activeTool, selectElement, selectRoute, stageRef]
   );
 
-  // Double-click pour finir le dessin de route
+  // Double-click pour finir le dessin de route ou de forme
   const handleStageDblClick = useCallback(() => {
     if (activeTool === 'draw_route' && drawingPointsRef.current.length >= 2) {
       addRoute({
@@ -151,7 +158,49 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
       });
       drawingPointsRef.current = [];
     }
-  }, [activeTool, addRoute]);
+
+    if (activeTool === 'draw_shape' && drawingShapePointsRef.current.length >= 3) {
+      const points = drawingShapePointsRef.current;
+      const xs = points.map((p) => p.x);
+      const ys = points.map((p) => p.y);
+      const minX = Math.min(...xs);
+      const minY = Math.min(...ys);
+      const maxX = Math.max(...xs);
+      const maxY = Math.max(...ys);
+      const w = Math.max(maxX - minX, 10);
+      const h = Math.max(maxY - minY, 10);
+
+      // Normalize points relative to bounding box origin
+      const customPoints = points.map((p) => ({
+        x: p.x - minX,
+        y: p.y - minY,
+      }));
+
+      addElement({
+        type: 'shape',
+        x: minX,
+        y: minY,
+        width: w,
+        height: h,
+        rotation: 0,
+        label: 'Forme libre',
+        icon: '',
+        color: '#6366F1',
+        opacity: 1,
+        fillStyle: 'solid',
+        fillOpacity: 0.3,
+        strokeWidth: 2,
+        showIcon: false,
+        shapeForm: 'custom',
+        customPoints,
+        locked: false,
+        visible: true,
+      });
+
+      drawingShapePointsRef.current = [];
+      setActiveTool('select');
+    }
+  }, [activeTool, addRoute, addElement, setActiveTool]);
 
   // Drag d'un element
   const handleElementDragEnd = useCallback(

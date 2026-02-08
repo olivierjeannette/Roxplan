@@ -52,6 +52,15 @@ const shapeOptions: { value: ShapeForm; label: string; icon: React.ReactNode }[]
       </svg>
     ),
   },
+  {
+    value: 'custom',
+    label: 'Libre',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polygon points="3,2 13,1 15,9 10,15 1,12" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      </svg>
+    ),
+  },
 ];
 
 export function PropertyPanel() {
@@ -124,7 +133,7 @@ export function PropertyPanel() {
               <label className="text-[11px] font-medium block mb-1.5" style={{ color: 'var(--text-muted)' }}>
                 Forme
               </label>
-              <div className="grid grid-cols-5 gap-1">
+              <div className="grid grid-cols-6 gap-1">
                 {shapeOptions.map((opt) => {
                   const isActive = (selectedElement.shapeForm || 'rectangle') === opt.value;
                   return (

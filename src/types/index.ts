@@ -15,7 +15,7 @@ export type ExerciseType =
 
 export type ElementCategory = 'station' | 'zone' | 'equipment' | 'marker' | 'structure';
 export type FillStyle = 'solid' | 'transparent' | 'none';
-export type ShapeForm = 'rectangle' | 'circle' | 'diamond' | 'hexagon' | 'triangle';
+export type ShapeForm = 'rectangle' | 'circle' | 'diamond' | 'hexagon' | 'triangle' | 'custom';
 
 export interface PlanElement {
   id: string;
@@ -40,7 +40,8 @@ export interface PlanElement {
   strokeWidth?: number;        // epaisseur du contour / de la ligne (barriers)
   dashPattern?: number[];      // pattern pointille [trait, espace] (barriers)
   showIcon?: boolean;          // afficher ou cacher l'icone
-  shapeForm?: ShapeForm;       // forme visuelle: rectangle, circle, diamond, hexagon, triangle
+  shapeForm?: ShapeForm;       // forme visuelle: rectangle, circle, diamond, hexagon, triangle, custom
+  customPoints?: RoutePoint[]; // points du polygone libre (relatifs a x,y)
 
   // Métadonnées station
   exerciseType?: ExerciseType;
@@ -73,7 +74,7 @@ export interface Route {
 
 // ==================== EDITOR TYPES ====================
 
-export type ActiveTool = 'select' | 'draw_route' | 'add_element' | 'text' | 'eraser';
+export type ActiveTool = 'select' | 'draw_route' | 'draw_shape' | 'add_element' | 'text' | 'eraser';
 export type BackgroundType = 'grid' | 'image' | 'blank';
 export type EventType = 'hyrox' | 'crossfit' | 'custom';
 

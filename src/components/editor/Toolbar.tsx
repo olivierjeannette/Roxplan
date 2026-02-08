@@ -3,6 +3,7 @@
 import {
   MousePointer2,
   Pencil,
+  Pentagon,
   Type,
   Eraser,
   Undo2,
@@ -18,6 +19,7 @@ import type { ActiveTool } from '@/types';
 const tools: { id: ActiveTool; icon: typeof MousePointer2; label: string }[] = [
   { id: 'select', icon: MousePointer2, label: 'Selectionner (V)' },
   { id: 'draw_route', icon: Pencil, label: 'Dessiner parcours (P)' },
+  { id: 'draw_shape', icon: Pentagon, label: 'Forme libre (S)' },
   { id: 'text', icon: Type, label: 'Texte (T)' },
   { id: 'eraser', icon: Eraser, label: 'Effacer (E)' },
 ];

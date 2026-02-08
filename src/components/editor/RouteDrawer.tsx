@@ -1,16 +1,18 @@
 'use client';
 
-import { Pencil, X } from 'lucide-react';
+import { Pencil, Pentagon, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEditorStore } from '@/stores/editorStore';
 
 export function RouteDrawer() {
   const { activeTool, setActiveTool } = useEditorStore();
-  const isDrawing = activeTool === 'draw_route';
+  const isDrawingRoute = activeTool === 'draw_route';
+  const isDrawingShape = activeTool === 'draw_shape';
+  const isActive = isDrawingRoute || isDrawingShape;
 
   return (
     <AnimatePresence>
-      {isDrawing && (
+      {isActive && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -23,11 +25,24 @@ export function RouteDrawer() {
             className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: 'var(--accent-light)' }}
           >
-            <Pencil size={14} style={{ color: 'var(--accent)' }} />
+            {isDrawingRoute ? (
+              <Pencil size={14} style={{ color: 'var(--accent)' }} />
+            ) : (
+              <Pentagon size={14} style={{ color: 'var(--accent)' }} />
+            )}
           </div>
           <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            <strong style={{ color: 'var(--text-primary)' }}>Mode parcours</strong> — Cliquez pour ajouter des points.
-            Double-cliquez pour terminer.
+            {isDrawingRoute ? (
+              <>
+                <strong style={{ color: 'var(--text-primary)' }}>Mode parcours</strong> — Cliquez pour ajouter des points.
+                Double-cliquez pour terminer.
+              </>
+            ) : (
+              <>
+                <strong style={{ color: 'var(--text-primary)' }}>Forme libre</strong> — Cliquez pour ajouter des sommets.
+                Double-cliquez pour fermer.
+              </>
+            )}
           </span>
           <motion.button
             whileHover={{ scale: 1.1 }}
