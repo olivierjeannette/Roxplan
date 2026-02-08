@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Plus, LayoutGrid } from 'lucide-react';
 import { PlanList } from '@/components/plans/PlanList';
 import type { Plan } from '@/types';
@@ -16,7 +17,6 @@ export default function DashboardPage() {
   }, []);
 
   const loadPlans = () => {
-    // MVP: chargement depuis localStorage
     try {
       const stored = localStorage.getItem('roxplan_plans');
       if (stored) {
@@ -78,46 +78,61 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <header className="glass-solid sticky top-0 z-10" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center btn-gradient">
               <LayoutGrid size={18} className="text-white" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">RoxPlan</h1>
+            <h1
+              className="text-xl font-bold"
+              style={{
+                background: 'var(--accent-gradient)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              RoxPlan
+            </h1>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={handleNewPlan}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn-gradient flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl"
           >
             <Plus size={16} />
             Nouveau plan
-          </button>
+          </motion.button>
         </div>
       </header>
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Mes plans</h2>
-          <p className="text-sm text-gray-500 mt-1">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-8"
+        >
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Mes plans
+          </h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Creez et gerez vos plans de parcours fitness.
           </p>
-        </div>
+        </motion.div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white border border-gray-200 rounded-xl overflow-hidden animate-pulse"
-              >
-                <div className="aspect-video bg-gray-100" />
-                <div className="p-3 space-y-2">
-                  <div className="h-4 bg-gray-100 rounded w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+              <div key={i} className="glass rounded-2xl overflow-hidden animate-pulse">
+                <div className="aspect-video" style={{ background: 'var(--bg-secondary)' }} />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 rounded-lg w-3/4" style={{ background: 'var(--bg-secondary)' }} />
+                  <div className="h-3 rounded-lg w-1/2" style={{ background: 'var(--bg-secondary)' }} />
                 </div>
               </div>
             ))}

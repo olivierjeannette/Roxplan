@@ -11,9 +11,9 @@ import {
   ZoomOut,
   Maximize2,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useEditorStore } from '@/stores/editorStore';
 import type { ActiveTool } from '@/types';
-import { cn } from '@/lib/utils';
 
 const tools: { id: ActiveTool; icon: typeof MousePointer2; label: string }[] = [
   { id: 'select', icon: MousePointer2, label: 'Selectionner (V)' },
@@ -30,79 +30,119 @@ export function Toolbar() {
   const canRedo = historyIndex < history.length - 1;
 
   return (
-    <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shadow-sm">
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className="glass-solid flex items-center gap-1 rounded-2xl px-2 py-1.5"
+      style={{ boxShadow: 'var(--shadow-lg)' }}
+    >
       {/* Outils */}
       {tools.map((tool) => {
         const Icon = tool.icon;
+        const isActive = activeTool === tool.id;
         return (
-          <button
+          <motion.button
             key={tool.id}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={() => setActiveTool(tool.id)}
             title={tool.label}
-            className={cn(
-              'p-2 rounded-md transition-colors',
-              activeTool === tool.id
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-            )}
+            aria-label={tool.label}
+            className="relative p-2.5 rounded-xl transition-colors"
+            style={{
+              color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+              background: isActive ? 'var(--accent-light)' : 'transparent',
+            }}
           >
             <Icon size={18} />
-          </button>
+            {isActive && (
+              <motion.div
+                layoutId="toolbar-indicator"
+                className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full"
+                style={{ background: 'var(--accent)' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            )}
+          </motion.button>
         );
       })}
 
       {/* Separateur */}
-      <div className="w-px h-6 bg-gray-200 mx-1" />
+      <div className="w-px h-6 mx-1" style={{ background: 'var(--border-subtle)' }} />
 
       {/* Undo / Redo */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         onClick={undo}
         disabled={!canUndo}
         title="Annuler (Ctrl+Z)"
-        className="p-2 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+        aria-label="Annuler"
+        className="p-2.5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ color: 'var(--text-secondary)' }}
       >
         <Undo2 size={18} />
-      </button>
-      <button
+      </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         onClick={redo}
         disabled={!canRedo}
         title="Retablir (Ctrl+Shift+Z)"
-        className="p-2 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+        aria-label="Retablir"
+        className="p-2.5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ color: 'var(--text-secondary)' }}
       >
         <Redo2 size={18} />
-      </button>
+      </motion.button>
 
       {/* Separateur */}
-      <div className="w-px h-6 bg-gray-200 mx-1" />
+      <div className="w-px h-6 mx-1" style={{ background: 'var(--border-subtle)' }} />
 
       {/* Zoom */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         onClick={() => setZoom(zoom / 1.2)}
         title="Dezoomer"
-        className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
+        aria-label="Dezoomer"
+        className="p-2.5 rounded-xl"
+        style={{ color: 'var(--text-secondary)' }}
       >
         <ZoomOut size={18} />
-      </button>
-      <span className="text-xs font-medium text-gray-600 w-12 text-center select-none">
+      </motion.button>
+      <span
+        className="text-xs font-semibold w-12 text-center select-none tabular-nums"
+        style={{ color: 'var(--text-secondary)' }}
+      >
         {Math.round(zoom * 100)}%
       </span>
-      <button
+      <motion.button
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         onClick={() => setZoom(zoom * 1.2)}
         title="Zoomer"
-        className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
+        aria-label="Zoomer"
+        className="p-2.5 rounded-xl"
+        style={{ color: 'var(--text-secondary)' }}
       >
         <ZoomIn size={18} />
-      </button>
-      <button
+      </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         onClick={() => {
           setZoom(1);
           setPan(0, 0);
         }}
         title="Recentrer"
-        className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
+        aria-label="Recentrer"
+        className="p-2.5 rounded-xl"
+        style={{ color: 'var(--text-secondary)' }}
       >
         <Maximize2 size={18} />
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }

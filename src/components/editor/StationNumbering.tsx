@@ -1,10 +1,11 @@
 'use client';
 
 import { Hash, ArrowUpDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useEditorStore } from '@/stores/editorStore';
 
 export function StationNumbering() {
-  const { elements, autoNumberStations, updateElement } = useEditorStore();
+  const { elements, autoNumberStations } = useEditorStore();
 
   const stations = elements
     .filter((el) => el.type === 'station')
@@ -15,25 +16,31 @@ export function StationNumbering() {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1">
+        <h4 className="text-[11px] font-semibold uppercase flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
           <Hash size={12} />
           Stations ({stations.length})
         </h4>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={autoNumberStations}
-          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
-          title="Re-numeroter par position (haut-bas, gauche-droite)"
+          className="flex items-center gap-1 text-[11px] font-medium"
+          style={{ color: 'var(--accent)' }}
+          title="Re-numeroter par position"
         >
-          <ArrowUpDown size={12} />
+          <ArrowUpDown size={11} />
           Auto
-        </button>
+        </motion.button>
       </div>
 
-      <div className="space-y-1">
-        {stations.map((station) => (
-          <div
+      <div className="space-y-0.5">
+        {stations.map((station, index) => (
+          <motion.div
             key={station.id}
-            className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-50 text-xs"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.2, delay: index * 0.03 }}
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-black/[0.02] transition-colors text-xs"
           >
             <span
               className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
@@ -41,11 +48,15 @@ export function StationNumbering() {
             >
               {station.stationNumber ?? '?'}
             </span>
-            <span className="flex-1 truncate text-gray-700">{station.label}</span>
+            <span className="flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>
+              {station.label}
+            </span>
             {station.reps && (
-              <span className="text-gray-400 flex-shrink-0">{station.reps}</span>
+              <span className="flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                {station.reps}
+              </span>
             )}
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>

@@ -3,8 +3,20 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { motion, AnimatePresence } from 'framer-motion';
 import type Konva from 'konva';
-import { ArrowLeft, Download, Save, Check, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  Save,
+  Check,
+  Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  LayoutGrid,
+} from 'lucide-react';
 import { useEditorStore } from '@/stores/editorStore';
 import { ElementLibrary } from '@/components/editor/ElementLibrary';
 import { PropertyPanel } from '@/components/editor/PropertyPanel';
@@ -15,16 +27,15 @@ import { RouteDrawer } from '@/components/editor/RouteDrawer';
 import { ExportDialog } from '@/components/editor/ExportDialog';
 import type { Plan } from '@/types';
 
-// Konva ne supporte pas le SSR — import dynamique obligatoire
 const Canvas = dynamic(
   () => import('@/components/editor/Canvas').then((mod) => ({ default: mod.Canvas })),
   {
     ssr: false,
     loading: () => (
-      <div className="flex-1 flex items-center justify-center bg-gray-100">
+      <div className="flex-1 flex items-center justify-center" style={{ background: 'var(--bg-secondary)' }}>
         <div className="text-center">
-          <Loader2 size={32} className="animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Chargement de l&apos;editeur...</p>
+          <Loader2 size={32} className="animate-spin mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Chargement de l&apos;editeur...</p>
         </div>
       </div>
     ),
@@ -39,8 +50,9 @@ export default function EditorPage() {
 
   const [showExport, setShowExport] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
 
-  // Subscribe to individual store slices to avoid full re-renders
   const planName = useEditorStore((s) => s.planName);
   const setPlanName = useEditorStore((s) => s.setPlanName);
   const loadPlan = useEditorStore((s) => s.loadPlan);
@@ -49,7 +61,6 @@ export default function EditorPage() {
   const isSaving = useEditorStore((s) => s.isSaving);
   const setSaveStatus = useEditorStore((s) => s.setSaveStatus);
 
-  // Charger le plan depuis localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem('roxplan_plans');
@@ -76,7 +87,6 @@ export default function EditorPage() {
     }
   }, [planId, loadPlan]);
 
-  // Auto-save with debounce — only depends on isDirty flag, reads state at save time
   useEffect(() => {
     if (!isDirty) return;
     const timeout = setTimeout(() => {
@@ -125,7 +135,6 @@ export default function EditorPage() {
     setSaveStatus(false);
   }, [planId, markClean, setSaveStatus]);
 
-  // Resize canvas
   useEffect(() => {
     const updateSize = () => {
       const container = document.getElementById('canvas-container');
@@ -142,86 +151,154 @@ export default function EditorPage() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
       {/* Top bar */}
-      <header className="h-12 bg-white border-b border-gray-200 flex items-center px-3 gap-3 flex-shrink-0">
+      <header
+        className="h-12 glass-solid flex items-center px-3 gap-3 flex-shrink-0 z-20"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
         {/* Back */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={() => router.push('/')}
-          className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          className="p-1.5 rounded-lg"
+          style={{ color: 'var(--text-muted)' }}
           title="Retour au dashboard"
+          aria-label="Retour"
         >
           <ArrowLeft size={18} />
-        </button>
+        </motion.button>
 
         {/* Logo */}
-        <span className="text-sm font-bold text-blue-600">RoxPlan</span>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md flex items-center justify-center btn-gradient">
+            <LayoutGrid size={12} className="text-white" />
+          </div>
+          <span
+            className="text-sm font-bold hidden sm:inline"
+            style={{
+              background: 'var(--accent-gradient)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            RoxPlan
+          </span>
+        </div>
 
         {/* Separator */}
-        <div className="w-px h-5 bg-gray-200" />
+        <div className="w-px h-5" style={{ background: 'var(--border-subtle)' }} />
 
         {/* Plan name */}
         <input
           type="text"
           value={planName}
           onChange={(e) => setPlanName(e.target.value)}
-          className="text-sm font-medium text-gray-700 bg-transparent border-none focus:outline-none focus:ring-0 px-1 py-0.5 hover:bg-gray-50 rounded min-w-[120px]"
+          className="text-sm font-medium bg-transparent border-none focus:outline-none px-1.5 py-0.5 rounded-lg min-w-[120px] focus-ring"
+          style={{ color: 'var(--text-primary)' }}
           placeholder="Nom du plan"
         />
 
-        {/* Save status */}
+        {/* Right actions */}
         <div className="ml-auto flex items-center gap-2">
+          {/* Save status */}
           {isSaving ? (
-            <span className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
               <Loader2 size={12} className="animate-spin" />
               Sauvegarde...
             </span>
           ) : isDirty ? (
-            <span className="text-xs text-amber-500">Non sauvegarde</span>
+            <span className="text-xs font-medium" style={{ color: 'var(--warning)' }}>Non sauvegarde</span>
           ) : (
-            <span className="flex items-center gap-1 text-xs text-green-600">
+            <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--success)' }}>
               <Check size={12} />
               Sauvegarde
             </span>
           )}
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={savePlan}
-            className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100"
+            className="p-1.5 rounded-lg"
+            style={{ color: 'var(--text-muted)' }}
             title="Sauvegarder (Ctrl+S)"
+            aria-label="Sauvegarder"
           >
             <Save size={16} />
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => setShowExport(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors"
+            className="btn-gradient flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-lg"
           >
             <Download size={14} />
             Exporter
-          </button>
+          </motion.button>
         </div>
       </header>
 
-      {/* Main editor area — 3 columns */}
+      {/* Main editor area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar — Element Library */}
-        <aside className="w-56 bg-white border-r border-gray-200 flex-shrink-0 overflow-hidden flex flex-col">
-          <div className="px-3 py-2 border-b border-gray-200">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase">Bibliotheque</h2>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <ElementLibrary />
-          </div>
-          <div className="border-t border-gray-200 p-3">
-            <BackgroundManager />
-          </div>
-        </aside>
+        <AnimatePresence initial={false}>
+          {leftOpen && (
+            <motion.aside
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 240, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="glass-solid flex-shrink-0 overflow-hidden flex flex-col z-10"
+              style={{ borderRight: '1px solid var(--border-subtle)' }}
+            >
+              <div className="px-3 py-2.5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <h2 className="text-[11px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>
+                  Bibliotheque
+                </h2>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setLeftOpen(false)}
+                  className="p-1 rounded-md"
+                  style={{ color: 'var(--text-muted)' }}
+                  aria-label="Fermer le panneau"
+                >
+                  <PanelLeftClose size={14} />
+                </motion.button>
+              </div>
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <ElementLibrary />
+              </div>
+              <div className="p-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                <BackgroundManager />
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Left toggle (when collapsed) */}
+        {!leftOpen && (
+          <motion.button
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setLeftOpen(true)}
+            className="absolute left-2 top-16 z-20 glass-solid p-2 rounded-xl"
+            style={{ boxShadow: 'var(--shadow-md)', color: 'var(--text-muted)' }}
+            aria-label="Ouvrir la bibliotheque"
+          >
+            <PanelLeftOpen size={16} />
+          </motion.button>
+        )}
 
         {/* Center — Canvas */}
         <main className="flex-1 flex flex-col relative overflow-hidden">
-          {/* Toolbar */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+          {/* Toolbar — floating bottom center */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
             <Toolbar />
           </div>
 
@@ -239,9 +316,51 @@ export default function EditorPage() {
         </main>
 
         {/* Right sidebar — Property Panel */}
-        <aside className="w-64 bg-white border-l border-gray-200 flex-shrink-0 overflow-hidden flex flex-col">
-          <PropertyPanel />
-        </aside>
+        <AnimatePresence initial={false}>
+          {rightOpen && (
+            <motion.aside
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 280, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="glass-solid flex-shrink-0 overflow-hidden flex flex-col z-10"
+              style={{ borderLeft: '1px solid var(--border-subtle)' }}
+            >
+              <div className="px-3 py-2.5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <h2 className="text-[11px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>
+                  Proprietes
+                </h2>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setRightOpen(false)}
+                  className="p-1 rounded-md"
+                  style={{ color: 'var(--text-muted)' }}
+                  aria-label="Fermer le panneau"
+                >
+                  <PanelRightClose size={14} />
+                </motion.button>
+              </div>
+              <PropertyPanel />
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Right toggle (when collapsed) */}
+        {!rightOpen && (
+          <motion.button
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setRightOpen(true)}
+            className="absolute right-2 top-16 z-20 glass-solid p-2 rounded-xl"
+            style={{ boxShadow: 'var(--shadow-md)', color: 'var(--text-muted)' }}
+            aria-label="Ouvrir les proprietes"
+          >
+            <PanelRightOpen size={16} />
+          </motion.button>
+        )}
       </div>
 
       {/* Export Dialog */}

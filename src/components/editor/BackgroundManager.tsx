@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { ImagePlus, Grid3X3, Square, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useEditorStore } from '@/stores/editorStore';
 import type { BackgroundType } from '@/types';
 
@@ -20,7 +21,6 @@ export function BackgroundManager() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validation
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       alert('Format non supporte. Utilisez JPG, PNG ou WebP.');
@@ -31,8 +31,6 @@ export function BackgroundManager() {
       return;
     }
 
-    // Pour le MVP, on utilise un data URL (localStorage)
-    // TODO: Remplacer par upload vers Vercel Blob
     const reader = new FileReader();
     reader.onload = () => {
       setBackgroundImage(reader.result as string);
@@ -48,35 +46,45 @@ export function BackgroundManager() {
 
   return (
     <div className="space-y-3">
-      <h4 className="text-xs font-semibold text-gray-500 uppercase">Fond du plan</h4>
+      <h4 className="text-[11px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>
+        Fond du plan
+      </h4>
 
-      {/* Type de fond */}
-      <div className="flex gap-1">
-        {backgrounds.map(({ type, icon: Icon, label }) => (
-          <button
-            key={type}
-            onClick={() => setBackgroundType(type)}
-            className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-md border text-xs transition-colors ${
-              backgroundType === type
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <Icon size={16} />
-            {label}
-          </button>
-        ))}
-        <button
+      <div className="flex gap-1.5">
+        {backgrounds.map(({ type, icon: Icon, label }) => {
+          const isActive = backgroundType === type;
+          return (
+            <motion.button
+              key={type}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setBackgroundType(type)}
+              className="flex-1 flex flex-col items-center gap-1 p-2 rounded-xl border text-[11px] font-medium transition-colors"
+              style={{
+                borderColor: isActive ? 'var(--accent)' : 'var(--border-subtle)',
+                background: isActive ? 'var(--accent-light)' : 'transparent',
+                color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+              }}
+            >
+              <Icon size={15} />
+              {label}
+            </motion.button>
+          );
+        })}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           onClick={() => fileInputRef.current?.click()}
-          className={`flex-1 flex flex-col items-center gap-1 p-2 rounded-md border text-xs transition-colors ${
-            backgroundType === 'image'
-              ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-          }`}
+          className="flex-1 flex flex-col items-center gap-1 p-2 rounded-xl border text-[11px] font-medium transition-colors"
+          style={{
+            borderColor: backgroundType === 'image' ? 'var(--accent)' : 'var(--border-subtle)',
+            background: backgroundType === 'image' ? 'var(--accent-light)' : 'transparent',
+            color: backgroundType === 'image' ? 'var(--accent)' : 'var(--text-secondary)',
+          }}
         >
-          <ImagePlus size={16} />
+          <ImagePlus size={15} />
           Image
-        </button>
+        </motion.button>
       </div>
 
       <input
@@ -87,29 +95,31 @@ export function BackgroundManager() {
         className="hidden"
       />
 
-      {/* Preview image */}
       {backgroundImageUrl && backgroundType === 'image' && (
         <div className="relative">
           <img
             src={backgroundImageUrl}
             alt="Fond"
-            className="w-full h-20 object-cover rounded-md border border-gray-200"
+            className="w-full h-20 object-cover rounded-xl"
+            style={{ border: '1px solid var(--border-subtle)' }}
           />
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => {
               setBackgroundImage(null);
               setBackgroundType('grid');
             }}
-            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+            className="absolute top-1.5 right-1.5 p-1 rounded-full"
+            style={{ background: 'var(--danger)', color: 'white' }}
           >
             <Trash2 size={10} />
-          </button>
+          </motion.button>
         </div>
       )}
 
-      {/* Opacite */}
       <div>
-        <label className="text-xs text-gray-500 block mb-1">
+        <label className="text-[11px] block mb-1.5" style={{ color: 'var(--text-muted)' }}>
           Opacite: {backgroundOpacity}%
         </label>
         <input
@@ -118,7 +128,6 @@ export function BackgroundManager() {
           max={100}
           value={backgroundOpacity}
           onChange={(e) => setBackgroundOpacity(Number(e.target.value))}
-          className="w-full"
         />
       </div>
     </div>

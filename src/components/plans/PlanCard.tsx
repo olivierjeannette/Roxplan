@@ -2,6 +2,7 @@
 
 import { MoreHorizontal, Copy, Trash2, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Plan } from '@/types';
 
 interface PlanCardProps {
@@ -10,6 +11,12 @@ interface PlanCardProps {
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 }
+
+const eventColors: Record<string, string> = {
+  hyrox: '#EF4444',
+  crossfit: '#8B5CF6',
+  custom: '#6366F1',
+};
 
 export function PlanCard({ plan, onOpen, onDuplicate, onDelete }: PlanCardProps) {
   const [showMenu, setShowMenu] = useState(false);
@@ -23,91 +30,106 @@ export function PlanCard({ plan, onOpen, onDuplicate, onDelete }: PlanCardProps)
   });
 
   const stationCount = plan.elements.filter((el) => el.type === 'station').length;
+  const color = eventColors[plan.eventType] || eventColors.custom;
 
   return (
-    <div className="group bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all">
+    <motion.div
+      whileHover={{ scale: 1.02, y: -2 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className="group glass rounded-2xl overflow-hidden cursor-pointer"
+    >
       {/* Thumbnail */}
       <div
-        className="aspect-video bg-gray-50 relative cursor-pointer"
+        className="aspect-video relative"
         onClick={() => onOpen(plan.id)}
+        style={{ background: `linear-gradient(135deg, ${color}08, ${color}15)` }}
       >
         {plan.thumbnail ? (
-          <img
-            src={plan.thumbnail}
-            alt={plan.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={plan.thumbnail} alt={plan.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 bg-gray-200 rounded-lg flex items-center justify-center">
-                <ExternalLink size={20} className="text-gray-400" />
+              <div
+                className="w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center"
+                style={{ background: `${color}15` }}
+              >
+                <ExternalLink size={20} style={{ color }} />
               </div>
-              <p className="text-xs text-gray-400">Aucun apercu</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Aucun apercu</p>
             </div>
           </div>
         )}
 
-        {/* Badge type */}
-        <span className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-medium uppercase rounded-full bg-white/90 text-gray-600 backdrop-blur-sm">
+        <span
+          className="absolute top-2.5 left-2.5 px-2.5 py-1 text-[10px] font-semibold uppercase rounded-full glass"
+          style={{ color }}
+        >
           {plan.eventType}
         </span>
       </div>
 
       {/* Info */}
-      <div className="p-3">
+      <div className="p-3.5">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <h3
-              className="text-sm font-medium text-gray-900 truncate cursor-pointer hover:text-blue-600"
+              className="text-sm font-semibold truncate"
+              style={{ color: 'var(--text-primary)' }}
               onClick={() => onOpen(plan.id)}
             >
               {plan.name}
             </h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
               {stationCount} stations &middot; {formattedDate}
             </p>
           </div>
 
-          {/* Menu */}
           <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+              className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ color: 'var(--text-muted)' }}
             >
               <MoreHorizontal size={16} />
-            </button>
+            </motion.button>
 
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-36">
-                  <button
-                    onClick={() => {
-                      onDuplicate(plan.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            <AnimatePresence>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-8 z-20 glass-solid rounded-xl py-1.5 w-40"
+                    style={{ boxShadow: 'var(--shadow-lg)' }}
                   >
-                    <Copy size={14} />
-                    Dupliquer
-                  </button>
-                  <button
-                    onClick={() => {
-                      onDelete(plan.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 size={14} />
-                    Supprimer
-                  </button>
-                </div>
-              </>
-            )}
+                    <button
+                      onClick={() => { onDuplicate(plan.id); setShowMenu(false); }}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm hover:bg-black/[0.03] transition-colors"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      <Copy size={14} />
+                      Dupliquer
+                    </button>
+                    <button
+                      onClick={() => { onDelete(plan.id); setShowMenu(false); }}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm hover:bg-red-50 transition-colors"
+                      style={{ color: 'var(--danger)' }}
+                    >
+                      <Trash2 size={14} />
+                      Supprimer
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

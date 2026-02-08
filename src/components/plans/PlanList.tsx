@@ -1,5 +1,7 @@
 'use client';
 
+import { motion } from 'framer-motion';
+import { Plus } from 'lucide-react';
 import { PlanCard } from './PlanCard';
 import type { Plan } from '@/types';
 
@@ -13,40 +15,39 @@ interface PlanListProps {
 export function PlanList({ plans, onOpen, onDuplicate, onDelete }: PlanListProps) {
   if (plans.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-2xl flex items-center justify-center">
-          <svg
-            className="w-8 h-8 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-center py-20"
+      >
+        <div
+          className="w-20 h-20 mx-auto mb-5 rounded-2xl flex items-center justify-center"
+          style={{ background: 'var(--accent-light)' }}
+        >
+          <Plus size={32} style={{ color: 'var(--accent)' }} />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-1">Aucun plan</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="text-lg font-semibold mb-1.5" style={{ color: 'var(--text-primary)' }}>
+          Aucun plan
+        </h3>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
           Creez votre premier plan de parcours pour commencer.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {plans.map((plan) => (
-        <PlanCard
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      {plans.map((plan, index) => (
+        <motion.div
           key={plan.id}
-          plan={plan}
-          onOpen={onOpen}
-          onDuplicate={onDuplicate}
-          onDelete={onDelete}
-        />
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.05 }}
+        >
+          <PlanCard plan={plan} onOpen={onOpen} onDuplicate={onDuplicate} onDelete={onDelete} />
+        </motion.div>
       ))}
     </div>
   );

@@ -1,27 +1,46 @@
 'use client';
 
 import { Pencil, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEditorStore } from '@/stores/editorStore';
 
 export function RouteDrawer() {
   const { activeTool, setActiveTool } = useEditorStore();
   const isDrawing = activeTool === 'draw_route';
 
-  if (!isDrawing) return null;
-
   return (
-    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white border border-blue-200 rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-3 z-10">
-      <Pencil size={16} className="text-blue-600" />
-      <span className="text-sm text-gray-700">
-        <strong>Mode parcours</strong> — Cliquez pour ajouter des points.
-        Double-cliquez pour terminer.
-      </span>
-      <button
-        onClick={() => setActiveTool('select')}
-        className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-      >
-        <X size={16} />
-      </button>
-    </div>
+    <AnimatePresence>
+      {isDrawing && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 12 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="absolute bottom-24 left-1/2 -translate-x-1/2 glass-solid rounded-xl px-4 py-2.5 flex items-center gap-3 z-10"
+          style={{ boxShadow: 'var(--shadow-lg)' }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'var(--accent-light)' }}
+          >
+            <Pencil size={14} style={{ color: 'var(--accent)' }} />
+          </div>
+          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <strong style={{ color: 'var(--text-primary)' }}>Mode parcours</strong> — Cliquez pour ajouter des points.
+            Double-cliquez pour terminer.
+          </span>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setActiveTool('select')}
+            className="p-1.5 rounded-lg hover:bg-black/5 transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+            aria-label="Fermer"
+          >
+            <X size={16} />
+          </motion.button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
