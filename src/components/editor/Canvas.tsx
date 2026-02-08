@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useCallback, useEffect, useState, useMemo, memo } from 'react';
-import { Stage, Layer, Rect, Line, Image as KonvaImage, Shape } from 'react-konva';
+import { Stage, Layer, Rect, Line, Circle, Image as KonvaImage, Shape } from 'react-konva';
 import type Konva from 'konva';
 import { useEditorStore } from '@/stores/editorStore';
 import { CanvasElement } from './CanvasElement';
@@ -90,6 +90,9 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
   // Points temporaires pour le dessin de route / forme
   const drawingPointsRef = useRef<{ x: number; y: number }[]>([]);
   const drawingShapePointsRef = useRef<{ x: number; y: number }[]>([]);
+  // Visual state for drawing previews
+  const [drawingRoutePoints, setDrawingRoutePoints] = useState<{ x: number; y: number }[]>([]);
+  const [drawingShapePoints, setDrawingShapePoints] = useState<{ x: number; y: number }[]>([]);
 
   // Zoom avec la molette
   const handleWheel = useCallback(
@@ -116,9 +119,37 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
     [setZoom, setPan, stageRef]
   );
 
+  // Reset drawing state when tool changes
+  useEffect(() => {
+    if (activeTool !== 'draw_route') {
+      drawingPointsRef.current = [];
+      setDrawingRoutePoints([]);
+    }
+    if (activeTool !== 'draw_shape') {
+      drawingShapePointsRef.current = [];
+      setDrawingShapePoints([]);
+    }
+  }, [activeTool]);
+
+  // Helper to get canvas-space coords from pointer
+  const getCanvasPoint = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return null;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return null;
+    const scale = stage.scaleX();
+    return {
+      x: (pointer.x - stage.x()) / scale,
+      y: (pointer.y - stage.y()) / scale,
+    };
+  }, [stageRef]);
+
   // Click sur le stage (deselection ou dessin de route)
   const handleStageClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
+      // Ignore double-click events (they also fire click)
+      if (e.evt.detail >= 2) return;
+
       if (e.target === e.target.getStage()) {
         if (activeTool === 'select') {
           selectElement(null);
@@ -127,23 +158,18 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
       }
 
       if (activeTool === 'draw_route' || activeTool === 'draw_shape') {
-        const stage = stageRef.current;
-        if (!stage) return;
-        const pointer = stage.getPointerPosition();
-        if (!pointer) return;
-        const scale = stage.scaleX();
-        const point = {
-          x: (pointer.x - stage.x()) / scale,
-          y: (pointer.y - stage.y()) / scale,
-        };
+        const point = getCanvasPoint();
+        if (!point) return;
         if (activeTool === 'draw_route') {
           drawingPointsRef.current.push(point);
+          setDrawingRoutePoints([...drawingPointsRef.current]);
         } else {
           drawingShapePointsRef.current.push(point);
+          setDrawingShapePoints([...drawingShapePointsRef.current]);
         }
       }
     },
-    [activeTool, selectElement, selectRoute, stageRef]
+    [activeTool, selectElement, selectRoute, getCanvasPoint]
   );
 
   // Double-click pour finir le dessin de route ou de forme
@@ -157,6 +183,7 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
         arrowSpacing: 80,
       });
       drawingPointsRef.current = [];
+      setDrawingRoutePoints([]);
     }
 
     if (activeTool === 'draw_shape' && drawingShapePointsRef.current.length >= 3) {
@@ -198,6 +225,7 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
       });
 
       drawingShapePointsRef.current = [];
+      setDrawingShapePoints([]);
       setActiveTool('select');
     }
   }, [activeTool, addRoute, addElement, setActiveTool]);
@@ -223,6 +251,12 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
+      if (e.key === 'Escape') {
+        const state = useEditorStore.getState();
+        if (state.activeTool !== 'select') {
+          state.setActiveTool('select');
+        }
+      }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const state = useEditorStore.getState();
         if (state.selectedElementId) {
@@ -312,6 +346,43 @@ export function Canvas({ width, height, stageRef: externalStageRef }: CanvasProp
           />
         ))}
       </Layer>
+
+      {/* Layer 4: Drawing preview */}
+      {(drawingRoutePoints.length > 0 || drawingShapePoints.length > 0) && (
+        <Layer listening={false}>
+          {/* Route drawing preview */}
+          {drawingRoutePoints.length > 0 && (
+            <>
+              <Line
+                points={drawingRoutePoints.flatMap((p) => [p.x, p.y])}
+                stroke="#000000"
+                strokeWidth={3}
+                dash={[8, 4]}
+                opacity={0.6}
+              />
+              {drawingRoutePoints.map((p, i) => (
+                <Circle key={i} x={p.x} y={p.y} radius={4} fill="#000000" opacity={0.7} />
+              ))}
+            </>
+          )}
+          {/* Shape drawing preview */}
+          {drawingShapePoints.length > 0 && (
+            <>
+              <Line
+                points={drawingShapePoints.flatMap((p) => [p.x, p.y])}
+                stroke="#6366F1"
+                strokeWidth={2}
+                dash={[6, 3]}
+                closed={drawingShapePoints.length >= 3}
+                fill={drawingShapePoints.length >= 3 ? 'rgba(99,102,241,0.1)' : undefined}
+              />
+              {drawingShapePoints.map((p, i) => (
+                <Circle key={i} x={p.x} y={p.y} radius={5} fill="#6366F1" stroke="#FFFFFF" strokeWidth={2} />
+              ))}
+            </>
+          )}
+        </Layer>
+      )}
     </Stage>
   );
 }

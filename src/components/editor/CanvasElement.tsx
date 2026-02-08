@@ -13,6 +13,14 @@ interface CanvasElementProps {
   onDragEnd: (x: number, y: number) => void;
 }
 
+/** Convert hex color + opacity (0-1) to rgba string */
+function hexToRgba(hex: string, opacity: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${opacity})`;
+}
+
 function ShapeBody({
   shapeForm,
   width,
@@ -38,6 +46,10 @@ function ShapeBody({
   const cy = height / 2;
   const radius = Math.min(width, height) / 2;
 
+  // Apply fillOpacity via rgba color instead of Konva opacity
+  // so that stroke remains fully visible
+  const resolvedFill = fill ? hexToRgba(fill, fillOpacity) : undefined;
+
   switch (shapeForm) {
     case 'custom': {
       if (!customPoints?.length) {
@@ -45,9 +57,8 @@ function ShapeBody({
           <Rect
             width={width}
             height={height}
-            fill={fill}
+            fill={resolvedFill}
             cornerRadius={cornerRadius}
-            opacity={fillOpacity}
             stroke={stroke}
             strokeWidth={strokeWidth}
           />
@@ -58,8 +69,7 @@ function ShapeBody({
         <Line
           points={flatPoints}
           closed={true}
-          fill={fill}
-          opacity={fillOpacity}
+          fill={resolvedFill}
           stroke={stroke}
           strokeWidth={strokeWidth}
         />
@@ -71,8 +81,7 @@ function ShapeBody({
           x={cx}
           y={cy}
           radius={radius}
-          fill={fill}
-          opacity={fillOpacity}
+          fill={resolvedFill}
           stroke={stroke}
           strokeWidth={strokeWidth}
         />
@@ -84,8 +93,7 @@ function ShapeBody({
           y={cy}
           sides={4}
           radius={radius}
-          fill={fill}
-          opacity={fillOpacity}
+          fill={resolvedFill}
           stroke={stroke}
           strokeWidth={strokeWidth}
         />
@@ -98,8 +106,7 @@ function ShapeBody({
           sides={6}
           radius={radius}
           rotation={30}
-          fill={fill}
-          opacity={fillOpacity}
+          fill={resolvedFill}
           stroke={stroke}
           strokeWidth={strokeWidth}
         />
@@ -111,8 +118,7 @@ function ShapeBody({
           y={cy}
           sides={3}
           radius={radius}
-          fill={fill}
-          opacity={fillOpacity}
+          fill={resolvedFill}
           stroke={stroke}
           strokeWidth={strokeWidth}
         />
@@ -122,9 +128,8 @@ function ShapeBody({
         <Rect
           width={width}
           height={height}
-          fill={fill}
+          fill={resolvedFill}
           cornerRadius={cornerRadius}
-          opacity={fillOpacity}
           stroke={stroke}
           strokeWidth={strokeWidth}
         />
@@ -182,9 +187,13 @@ export const CanvasElement = memo(function CanvasElement({
   let rectStroke: string;
   let rectStrokeWidth: number;
 
+  // Combine element.opacity with fillOpacity so that
+  // fillOpacity=1 truly blocks what's behind the shape
+  const globalOpacity = element.opacity;
+
   if (fillStyle === 'solid') {
     rectFill = element.color;
-    rectFillOpacity = element.fillOpacity ?? 0.4;
+    rectFillOpacity = (element.fillOpacity ?? 0.4) * globalOpacity;
     rectStroke = isSelected ? '#3B82F6' : element.color;
     rectStrokeWidth = isSelected ? 2 : (element.strokeWidth || 1);
   } else if (fillStyle === 'none') {
@@ -194,16 +203,14 @@ export const CanvasElement = memo(function CanvasElement({
     rectStrokeWidth = element.strokeWidth || 3;
   } else {
     rectFill = element.color;
-    rectFillOpacity = 0.15;
+    rectFillOpacity = 0.15 * globalOpacity;
     rectStroke = isSelected ? '#3B82F6' : element.color;
     rectStrokeWidth = isSelected ? 2 : 1;
   }
 
   const transformerAnchors = isBarrier
     ? ['middle-left', 'middle-right'] as string[]
-    : resolvedShape !== 'rectangle'
-      ? ['top-left', 'top-right', 'bottom-left', 'bottom-right']
-      : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center'];
+    : ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right', 'top-center', 'bottom-center'];
 
   return (
     <>
@@ -218,7 +225,6 @@ export const CanvasElement = memo(function CanvasElement({
         onClick={onSelect}
         onTap={onSelect}
         onDragEnd={handleDragEnd}
-        opacity={element.opacity}
       >
         {isBarrier ? (
           <>
@@ -229,6 +235,7 @@ export const CanvasElement = memo(function CanvasElement({
               lineCap="round"
               dash={element.dashPattern}
               hitStrokeWidth={Math.max(12, (element.strokeWidth || 6) + 8)}
+              opacity={globalOpacity}
             />
             <Rect
               width={element.width}
@@ -271,6 +278,7 @@ export const CanvasElement = memo(function CanvasElement({
             y={element.height / 2 - iconSize / 2}
             width={iconSize}
             height={iconSize}
+            opacity={globalOpacity}
             listening={false}
           />
         )}
@@ -285,6 +293,7 @@ export const CanvasElement = memo(function CanvasElement({
           fontFamily="Inter, sans-serif"
           fill="#374151"
           align="center"
+          opacity={globalOpacity}
           listening={false}
         />
 
@@ -333,7 +342,7 @@ export const CanvasElement = memo(function CanvasElement({
           ref={transformerRef}
           rotateEnabled={true}
           enabledAnchors={transformerAnchors}
-          keepRatio={resolvedShape !== 'rectangle'}
+          keepRatio={false}
           boundBoxFunc={(oldBox, newBox) => {
             if (isBarrier) {
               if (newBox.width < 20) return oldBox;
